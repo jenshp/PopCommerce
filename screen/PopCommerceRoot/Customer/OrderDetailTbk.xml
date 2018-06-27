@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a 
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
+        require-authentication="true">
+
+    <parameter name="orderId" required="true"/>
+    <pre-actions>
+        <!-- TODO: set the productStoreId for this store here (some way to make this more dynamic?) -->
+        <!--set field="productStoreId" value="POPC_DEFAULT"/-->
+        <set field="productStoreId" value="WEB001"/>
+        <entity-find-one entity-name="mantle.product.store.ProductStore" value-field="productStore" cache="false"/>
+        <set field="currencyUomId" from="productStore?.defaultCurrencyUomId"/>
+        <set field="priceUomId" from="productStore?.defaultCurrencyUomId"/>
+        <set field="defaultLocale" from="productStore?.defaultLocale"/>
+        <set field="organizationPartyId" from="productStore?.organizationPartyId"/>
+        <set field="vendorPartyId" from="productStore?.organizationPartyId"/>
+        <set field="wikiSpaceId" from="productStore?.wikiSpaceId"/>
+
+        <!-- some settings used when adding to cart, etc -->
+        <set field="cartOrderId" from="ec.web.sessionAttributes.cartOrderId" set-if-empty="false"/>
+        <set field="customerPartyId" from="ec.user.userAccount?.partyId"/>
+        <!-- NOTE: if needed set additional parameters for creating an order here, for example: carrierPartyId:'_NA_', shipmentMethodEnumId:'ShMthGround' -->
+        <set field="defaultOrderParameters" from="[orderId:cartOrderId, customerPartyId:customerPartyId, currencyUomId:currencyUomId,
+                productStoreId:productStoreId, salesChannelEnumId:'ScWeb']"/>
+
+        <!-- Llamado a voucher de Transbank -->
+        <service-call name="mchile.TransbankServices.getTransactionResult#Webpay"
+                      in-map="context + [buyOrder:orderId] + [tokenInput:token_ws] + [amount:itemTotal] + [buyOrder:cartOrderId] + [returnURL:'?action=webpayNormalGetResult'] + [finalURL:'?action=end'] +  [productStoreId:productStoreId, defaultCurrencyUomId:currencyUomId, customerPartyId:customerPartyId, organizationPartyId:organizationPartyId]" out-map="context"/>
+        <set field="html_title" value="Review Order #${orderId}"/>
+        <!-- Falta verificar pago rechazado -->
+        <script>
+            if(responseCode == 0) {
+                sri.sendRedirectAndStopRender(urlRedirection + "?token_ws=" + token_ws)
+            }
+        </script>
+    </pre-actions>
+    <widgets>
+        <section name="tbkVoucher">
+            <widgets>
+                <label text="Pago RECHAZADO por Webpay" type="h3"/>
+            </widgets>
+        </section>
+    </widgets>
+</screen>

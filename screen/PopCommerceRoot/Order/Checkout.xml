@@ -21,6 +21,11 @@ along with this software (see the LICENSE.md file). If not, see
         <default-response url="../Review"/>
     </transition>
 
+    <transition name="webpayPayment">
+        <!--service-call name="mantle.order.OrderServices.set#OrderBillingShippingInfo" in-map="context + [orderId:cartOrderId]"/-->
+        <default-response url="../Review"/>
+    </transition>
+
     <transition name="updateContactInfo"><default-response url="UpdateContactInfo"/></transition>
     <transition name="updatePaymentMethodInfo"><default-response url="UpdatePaymentMethodInfo"/></transition>
 
@@ -56,33 +61,6 @@ along with this software (see the LICENSE.md file). If not, see
         <set field="payment" from="paymentList.first"/>
     </actions>
     <widgets>
-        <container-box>
-            <box-header><label text="Choose a Credit Card" type="h5"/></box-header>
-            <box-toolbar>
-                <dynamic-dialog id="CreateCreditCardDialog" button-text="Add Credit Card"
-                        transition="updatePaymentMethodInfo" width="800"
-                        parameter-map="[partyId:partyId, paymentMethodTypeEnumId:'PmtCreditCard']"/>
-            </box-toolbar>
-            <box-body>
-                <container style="float-box" type="ul">
-                    <section-iterate name="BillingInfoSection" list="cciOut.methodInfoList" entry="methodInfo">
-                        <actions><set field="checkRadio" from="(payment?.paymentMethodId &amp;&amp; payment?.paymentMethodId == methodInfo.paymentMethodId) || (!payment?.paymentMethodId &amp;&amp; methodInfo_index == 0)"/></actions>
-                        <widgets>
-                            <container type="li">
-                                <render-mode><text type="html"><![CDATA[
-                                    <div class="text-center"><input type="radio" name="paymentMethodId" value="${methodInfo.paymentMethodId}"<#if checkRadio> checked="checked"</#if>></div>
-                                ]]></text></render-mode>
-                                <render-mode><text type="html" location="component://SimpleScreens/template/party/PaymentMethodInfo.html.gstring"/></render-mode>
-                                <dynamic-dialog id="UpdatePaymentMethodDialog" button-text="Update"
-                                        transition="updatePaymentMethodInfo" width="800"
-                                        parameter-map="[partyId:partyId, paymentMethodId:methodInfo.paymentMethodId]"/>
-                                <!-- TODO: add remove link -->
-                            </container>
-                        </widgets>
-                    </section-iterate>
-                </container>
-            </box-body>
-        </container-box>
 
         <container-box>
             <box-header><label text="Choose a Shipping Address" type="h5"/></box-header>

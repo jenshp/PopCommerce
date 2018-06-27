@@ -24,6 +24,18 @@ along with this software (see the LICENSE.md file). If not, see
         <default-response url="../../Customer/OrderDetail"><parameter name="orderId" from="cartOrderId"/></default-response>
     </transition>
 
+    <transition name="placeOrderWebpay">
+        <actions>
+            <service-call name="mchile.TransbankServices.initTransaction#Webpay"
+                          in-map="context + [amount:itemTotal, buyOrder:cartOrderId, productStoreId:productStoreId]" out-map="context"/>
+            <script>ec.web.sessionAttributes.remove("cartOrderId")</script>
+        </actions>
+        <conditional-response url="${urlTbk}" url-type="plain" parameter-map="[token_ws:token]">
+            <condition><expression>token</expression></condition></conditional-response>
+        <default-response url="../Review"/>
+    </transition>
+
+
     <pre-actions>
         <set field="html_title" value="Review Order #${cartOrderId}"/>
     </pre-actions>
@@ -39,6 +51,7 @@ along with this software (see the LICENSE.md file). If not, see
                     <panel-left>
                         <label text="Order Part ${orderPartInfo.orderPart.orderPartSeqId}" type="strong"/>
                         <label text="Part Total ${ec.l10n.formatCurrency(orderHeader?.grandTotal ?: 0, orderHeader?.currencyUomId)}" type="p"/>
+                        <set field="grandTotal" from="orderHeader?.grandTotal"/>
 
                         <!-- shipping info -->
                         <label text="${orderPartInfo.shipmentMethodEnum?.description ?: ''}" type="p"/>
@@ -64,7 +77,7 @@ along with this software (see the LICENSE.md file). If not, see
                         </section-iterate>
                     </panel-center>
                     <panel-footer>
-                        <form-list name="OrderItems" list="orderPartInfo.partOrderItemList" list-entry="orderItem" skip-form="true">
+                        <form-list name="OrderItems" list="orderPartInfo.partOrderItemList" list-entry="orderItem" transition="placeOrder">
                             <row-actions>
                                 <service-call name="mantle.order.OrderServices.get#OrderItemTotal" in-map="[orderItem:orderItem]" out-map="orderItemTotalOut"/>
                                 <script>context.putAll(orderItem)</script>
@@ -74,7 +87,6 @@ along with this software (see the LICENSE.md file). If not, see
                             </default-field></field>
                             <field name="description"><default-field title="Description">
                                 <display text="${itemDescription} ${productId ? '[' + productId + ']' : ''}"/>
-                                <!-- <display-entity entity-name="Product" text="${productName} [${productId}]" also-hidden="false"/> -->
                             </default-field></field>
                             <field name="unitAmount"><default-field><display currency-unit-field="orderHeader.currencyUomId"/></default-field></field>
                             <field name="quantity"><default-field><display/></default-field></field>
@@ -91,7 +103,7 @@ along with this software (see the LICENSE.md file). If not, see
         <label text="Order Total: ${ec.l10n.formatCurrency(orderHeader?.grandTotal ?: 0, orderHeader?.currencyUomId)}" type="h3"/>
 
         <container>
-            <link text="Place Order" link-type="hidden-form" url="placeOrder"/>
+            <link text="Place Order" link-type="hidden-form" url="placeOrder"/> <link text="Place Order Webpay" link-type="hidden-form" url="placeOrderWebpay"/>
         </container>
     </widgets>
 </screen>

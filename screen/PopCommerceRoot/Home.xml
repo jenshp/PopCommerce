@@ -16,6 +16,24 @@ along with this software (see the LICENSE.md file). If not, see
         xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
         require-authentication="false">
 
+    <transition name="image" read-only="true">
+        <parameter name="productContentId"/>
+        <actions>
+            <set field="extraPathNameList" from="sri.screenUrlInfo.extraPathNameList"/>
+            <if condition="extraPathNameList &amp;&amp; !productContentId">
+                <set field="productContentId" from="extraPathNameList[0]"/></if>
+            <entity-find-one entity-name="mantle.product.ProductContent" value-field="productContent" cache="true">
+                <field-map field-name="productContentId"/></entity-find-one>
+            <if condition="productContent == null"><then>
+                <!-- NOTE: consider returning a default image instead of 404 -->
+                <script>ec.web.sendError(404, null, null)</script>
+            </then><else>
+                <script>ec.web.sendResourceResponse(productContent.contentLocation, true)</script>
+            </else></if>
+        </actions>
+        <default-response type="none"/>
+    </transition>
+
     <transition name="addToCart">
         <actions>
             <service-call name="mantle.order.OrderServices.add#OrderProductQuantity" out-map="addOut"
@@ -27,15 +45,17 @@ along with this software (see the LICENSE.md file). If not, see
     </transition>
 
     <actions>
-        <entity-find entity-name="ProductStoreCategory" list="pscList" cache="true">
+
+        <entity-find entity-name="ProductStoreCategory" list="pscList" cache="false">
             <date-filter/><econdition field-name="productStoreId"/>
             <econdition field-name="storeCategoryTypeEnumId" value="PsctHomePage"/>
         </entity-find>
         <set field="productCategoryId" from="pscList?.getAt(0)?.productCategoryId"/>
-        <entity-find entity-name="ProductCategoryMemberProduct" list="pcmpList" cache="true">
+        <entity-find entity-name="ProductCategoryMemberProduct" list="pcmpList" cache="false">
             <date-filter/><econdition field-name="productCategoryId" from="productCategoryId"/>
             <order-by field-name="sequenceNum"/><order-by field-name="productName"/>
         </entity-find>
+
     </actions>
     <widgets>
         <!-- <label text="POP Commerce Home Page" type="h1"/> -->
@@ -46,10 +66,21 @@ along with this software (see the LICENSE.md file). If not, see
                                 vendorPartyId:vendorPartyId, customerPartyId:customerPartyId]"/>
                 <set field="price" from="priceMap?.price"/>
                 <set field="priceUomId" from="priceMap?.priceUomId"/>
+                <!--service-call name="mantle.product.ProductServices.get#ProductImage" out-map="imageSmallList2"
+                              in-map="[productId:productId]"/-->
+                <entity-find entity-name="mantle.product.ProductContent" list="contentList" cache="true">
+                    <date-filter/><econdition field-name="productId"/><order-by field-name="sequenceNum,-fromDate"/></entity-find>
+                <set field="descLongLocation" from="contentList.find({ 'PcntDescriptionLong' == it.productContentTypeEnumId })?.contentLocation"/>
+                <if condition="descLongLocation"><set field="descriptionLong" from="ec.resource.getLocationText(descLongLocation, true)"/></if>
+                <!--set field="imageSmallList" from="contentList.findAll({ 'PcntImageSmall' == it.productContentTypeEnumId })"/-->
+                <set field="imageSmallList" from="contentList.findAll({ 'PcntAddToCartImage' == it.productContentTypeEnumId })"/>
+
             </row-actions>
-            
             <field name="productId"><default-field><hidden/></default-field></field>
             <field name="productName"><default-field title="">
+                <section-iterate name="ImageSmallSection" list="imageSmallList" entry="imageSmall"><widgets>
+                    <image url="image/${imageSmall.productContentId}" url-type="transition" parameter-map="[productId:null]"/></widgets>
+                </section-iterate>
                 <link text="${productName}" url="/popc/Product/Detail/${productId}/${productName?.replace(' ', '-')}"
                         url-noparam="true" link-type="anchor"/>
             </default-field></field>
@@ -57,5 +88,6 @@ along with this software (see the LICENSE.md file). If not, see
             <field name="quantity"><default-field title=""><text-line size="2" default-value="1"/></default-field></field>
             <field name="add"><default-field title="Add to Cart"><submit/></default-field></field>
         </form-list>
+
     </widgets>
 </screen>

@@ -86,13 +86,19 @@ along with this software (see the LICENSE.md file). If not, see
         <!-- some content types may have more than one record, long description just has one -->
         <set field="descLongLocation" from="contentList.find({ 'PcntDescriptionLong' == it.productContentTypeEnumId })?.contentLocation"/>
         <if condition="descLongLocation"><set field="descriptionLong" from="ec.resource.getLocationText(descLongLocation, true)"/></if>
-        <set field="imageSmallList" from="contentList.findAll({ 'PcntImageSmall' == it.productContentTypeEnumId })"/>
+        <set field="imageSmallList" from="contentList.findAll({ 'PcntImageLarge' == it.productContentTypeEnumId })"/>
     </actions>
     <widgets>
         <!-- <label text="${product.productName ?: ''}" type="h2"/> -->
         <label text="${product.description ?: ''}" type="p"/>
 
-        <container-row><row-col md="6">
+        <container-row>
+            <row-col md="6">
+                <section-iterate name="ImageSmallSection" list="imageSmallList" entry="imageSmall"><widgets>
+                    <image url="image/${imageSmall.productContentId}" url-type="transition" alt="${imageSmall.description}" width="300" parameter-map="[productId:null]"/>
+                </widgets></section-iterate>
+            </row-col>
+            <row-col md="6">
             <form-single name="ProductAddToCartForm" transition="addToCart">
                 <field name="productId"><default-field><hidden/></default-field></field>
                 <field name="price"><default-field title=""><display also-hidden="false" currency-unit-field="priceUomId"/></default-field></field>
@@ -105,10 +111,6 @@ along with this software (see the LICENSE.md file). If not, see
             </form-single>
 
             <label text="Class: ${productClassEnum.description}" condition="productClassEnum" type="strong"/>
-        </row-col><row-col md="6">
-            <section-iterate name="ImageSmallSection" list="imageSmallList" entry="imageSmall"><widgets>
-                <image url="image/${imageSmall.productContentId}" url-type="transition" alt="${imageSmall.description}" width="64" parameter-map="[productId:null]"/>
-            </widgets></section-iterate>
         </row-col></container-row>
 
         <label text="${descriptionLong}" encode="false" type="div" condition="descriptionLong"/>

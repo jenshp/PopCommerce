@@ -17,6 +17,7 @@ along with this software (see the LICENSE.md file). If not, see
         require-authentication="true">
 
     <parameter name="orderId" required="true"/>
+    <parameter name="cancelled"/>
 
     <actions>
         <service-call name="mantle.order.OrderInfoServices.get#OrderDisplayInfo" in-map="[orderId:orderId]" out-map="context"/>
@@ -27,6 +28,7 @@ along with this software (see the LICENSE.md file). If not, see
                 <set field="isCustomer" from="true"/>
             </if>
         </iterate>
+
     </actions>
     <widgets>
         <section name="CheckCustomerSection">
@@ -79,9 +81,21 @@ along with this software (see the LICENSE.md file). If not, see
                                 <display currency-unit-field="orderHeader.currencyUomId" also-hidden="false"/>
                             </default-field></field>
                         </form-list>
+
                     </widgets>
                 </section-iterate>
+                <section name="errorMessage">
+                    <condition><expression>cancelled</expression></condition>
+                    <widgets>
+                        <container style="row shaded-area">
+                        <conditional-field condition="cancelled">
+                            <label text="Order #${orderId} payment cancelled" type="h3"/>
+                        </conditional-field>
+                        </container>
+                    </widgets>
+                </section>
             </widgets>
+
             <fail-widgets>
                 <label text="You cannot view Order #${orderId}" type="h3"/>
             </fail-widgets>
