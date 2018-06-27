@@ -74,7 +74,6 @@ along with this software (see the LICENSE.md file). If not, see
                 <if condition="descLongLocation"><set field="descriptionLong" from="ec.resource.getLocationText(descLongLocation, true)"/></if>
                 <!--set field="imageSmallList" from="contentList.findAll({ 'PcntImageSmall' == it.productContentTypeEnumId })"/-->
                 <set field="imageSmallList" from="contentList.findAll({ 'PcntAddToCartImage' == it.productContentTypeEnumId })"/>
-
             </row-actions>
             <field name="productId"><default-field><hidden/></default-field></field>
             <field name="productName"><default-field title="">
