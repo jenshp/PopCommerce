@@ -66,13 +66,10 @@ along with this software (see the LICENSE.md file). If not, see
                                 vendorPartyId:vendorPartyId, customerPartyId:customerPartyId]"/>
                 <set field="price" from="priceMap?.price"/>
                 <set field="priceUomId" from="priceMap?.priceUomId"/>
-                <!--service-call name="mantle.product.ProductServices.get#ProductImage" out-map="imageSmallList2"
-                              in-map="[productId:productId]"/-->
                 <entity-find entity-name="mantle.product.ProductContent" list="contentList" cache="true">
                     <date-filter/><econdition field-name="productId"/><order-by field-name="sequenceNum,-fromDate"/></entity-find>
                 <set field="descLongLocation" from="contentList.find({ 'PcntDescriptionLong' == it.productContentTypeEnumId })?.contentLocation"/>
                 <if condition="descLongLocation"><set field="descriptionLong" from="ec.resource.getLocationText(descLongLocation, true)"/></if>
-                <!--set field="imageSmallList" from="contentList.findAll({ 'PcntImageSmall' == it.productContentTypeEnumId })"/-->
                 <set field="imageSmallList" from="contentList.findAll({ 'PcntAddToCartImage' == it.productContentTypeEnumId })"/>
             </row-actions>
             <field name="productId"><default-field><hidden/></default-field></field>
